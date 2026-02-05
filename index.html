@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientèle - Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafaf9;
+            padding: 1rem;
+        }
+        .header {
+            background: #1c1917;
+            color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; }
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem 0;
+            width: 100%;
+        }
+        .btn-primary { background: #d97706; color: white; }
+        .btn-secondary { background: #44403c; color: white; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .hidden { display: none; }
+        .client-item {
+            padding: 1rem;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .client-item:active { background: #f5f5f5; }
+        .back-btn {
+            background: none;
+            border: none;
+            color: #666;
+            padding: 0.5rem 0;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+        .tab.active { border-bottom-color: #d97706; color: #d97706; }
+        .tabs { display: flex; border-bottom: 1px solid #e5e5e5; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .form-textarea { min-height: 100px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .stat-card { background: #f5f5f5; padding: 1rem; border-radius: 8px; }
+        .empty { text-align: center; color: #999; padding: 2rem; }
+        .item-card { border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        input[type="file"] { display: none; }
+        .upload-label {
+            display: block;
+            background: #d97706;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .preview-img { max-width: 100%; border-radius: 8px; margin-top: 0.5rem; }
+        .action-item {
+            padding: 1rem;
+            background: #fafaf9;
+            border-left: 3px solid #d97706;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+            display: flex;
+            gap: 1rem;
+            align-items: start;
+        }
+        .action-item input[type="checkbox"] {
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        .action-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+            border-left-color: #999;
+        }
+        .priority-high { border-left-color: #dc2626; background: #fef2f2; }
+        .priority-medium { border-left-color: #d97706; background: #fffbeb; }
+        .priority-low { border-left-color: #059669; background: #f0fdf4; }
+        .section-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: #1c1917;
+        }
+        .tier-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .tier-vip { background: #fef3c7; color: #92400e; }
+        .tier-active { background: #dbeafe; color: #1e40af; }
+        .tier-potential { background: #e0e7ff; color: #4338ca; }
+        .tier-dormant { background: #f5f5f4; color: #78716c; }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border: 1px solid #d4d4d4;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .filter-btn.active {
+            background: #1c1917;
+            color: white;
+            border-color: #1c1917;
+        }
+        .score-display {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #d97706;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        input:disabled + .toggle-slider {
+            background-color: #e5e5e5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Clientèle</div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary" onclick="showSettings()" style="padding: 0.6rem 1rem; width: auto;">⚙️</button>
+            <button class="btn btn-primary" onclick="showAddClient()" style="width: auto; padding: 0.6rem 1rem;">+ Client</button>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+        <div class="card">
+            <h2 style="margin-bottom: 1rem;">All Clients (<span id="count">0</span>)</h2>
+            
+            <button class="btn btn-primary" onclick="rankAllClients()" style="margin-bottom: 1rem; width: 100%;">
+                🏆 Rank Clients by Value
+            </button>
+            
+            <button class="btn btn-secondary" onclick="generateDailyBrief()" style="margin-bottom: 1rem; width: 100%;">
+                🧠 Generate Daily Brief
+            </button>
+            
+            <div style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                <button class="filter-btn active" onclick="filterByTier('all')">All</button>
+                <button class="filter-btn" onclick="filterByTier('vip')">💎 VIP</button>
+                <button class="filter-btn" onclick="filterByTier('active')">⭐ Active</button>
+                <button class="filter-btn" onclick="filterByTier('potential')">📊 Potential</button>
+                <button class="filter-btn" onclick="filterByTier('dormant')">😴 Dormant</button>
+            </div>
+            
+            <div id="client-list"></div>
+        </div>
+    </div>
+
+    <!-- Daily Brief View -->
+    <div id="daily-brief" class="hidden">
+        <button class="back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 0.5rem;">📋 Your Daily Brief</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;" id="brief-date"></p>
+            <div id="brief-content" style="color: #666; text-align: center; padding: 2rem;">
+                Analyzing your client book...
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settings-view" class="hidden">
+        <button class="back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">⚙️ Settings</h2>
+            
+            <!-- API Key Section -->
+            <div style="border-bottom: 1px solid #e5e5e5; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">🤖 AI Features</h3>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+                    Enable AI-powered screenshot analysis and smart insights
+                </p>
+                
+                <div id="api-key-status" style="background: #f5f5f4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 500; margin-bottom: 0.25rem;">Status</div>
+                            <div id="api-status-text" style="font-size: 0.9rem; color: #666;">Not configured</div>
+                        </div>
+                        <div id="api-status-icon" style="font-size: 1.5rem;">⚪</div>
+                    </div>
+                </div>
+                
+                <div id="api-key-display" class="hidden" style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Your API Key</div>
+                    <div style="font-family: monospace; font-size: 0.85rem; background: #fafaf9; padding: 0.75rem; border-radius: 6px; overflow-x: auto;">
+                        <span id="api-key-masked"></span>
+                    </div>
+                </div>
+                
+                <div id="api-key-form" class="hidden" style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Paste your API key:</div>
+                    <input 
+                        type="text" 
+                        id="api-key-input" 
+                        class="form-input" 
+                        placeholder="sk-ant-api03-..."
+                        style="margin-bottom: 0.5rem; font-family: monospace; font-size: 0.85rem;"
+                    >
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary" id="save-api-key-btn" style="flex: 1;">
+                            Save Key
+                        </button>
+                        <button class="btn btn-outline" id="cancel-api-key-btn" style="flex: 1;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="add-api-key-btn" style="width: 100%; margin-bottom: 0.5rem;">
+                    Add API Key
+                </button>
+                <button class="btn btn-outline" id="remove-api-key-btn" class="hidden" style="width: 100%;">
+                    Remove API Key
+                </button>
+                
+                <div style="background: #fffbeb; border: 1px solid #fcd34d; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.85rem;">
+                    <strong>💡 How to get an API key:</strong><br>
+                    1. Go to <strong>console.anthropic.com</strong><br>
+                    2. Sign up / Log in<br>
+                    3. Click "API Keys" → "Create Key"<br>
+                    4. Copy and paste it here<br><br>
+                    <strong>Cost:</strong> ~$0.01-0.02 per screenshot (~$2/month typical usage)
+                </div>
+            </div>
+            
+            <!-- Feature Toggles -->
+            <div style="border-bottom: 1px solid #e5e5e5; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">🎛️ Features</h3>
+                
+                <div class="feature-toggle">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-weight: 500;">AI Message Analysis</div>
+                            <div style="font-size: 0.85rem; color: #666;">Auto-analyze message screenshots</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-message-ai" onchange="toggleFeature('messageAI', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="feature-toggle">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-weight: 500;">AI Receipt Analysis</div>
+                            <div style="font-size: 0.85rem; color: #666;">Auto-extract receipt data</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-receipt-ai" onchange="toggleFeature('receiptAI', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="feature-toggle">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-weight: 500;">AI Daily Briefs</div>
+                            <div style="font-size: 0.85rem; color: #666;">Enhanced insights in daily brief</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-brief-ai" onchange="toggleFeature('briefAI', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.85rem;">
+                    💡 <strong>Tip:</strong> All features work without AI - toggles only enable AI enhancement when you have an API key configured.
+                </div>
+            </div>
+            
+            <!-- Data Management -->
+            <div>
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">💾 Data Management</h3>
+                
+                <button class="btn btn-outline" onclick="exportData()" style="width: 100%; margin-bottom: 0.5rem;">
+                    📤 Export All Data
+                </button>
+                
+                <button class="btn btn-outline" onclick="importData()" style="width: 100%; margin-bottom: 0.5rem;">
+                    📥 Import Data
+                </button>
+                
+                <button class="btn" onclick="clearAllData()" style="width: 100%; background: #fee2e2; color: #991b1b;">
+                    🗑️ Clear All Data
+                </button>
+                
+                <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.85rem;">
+                    ⚠️ <strong>Important:</strong> Your data is stored locally on this device only. Use export to back up or transfer to another device.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Client -->
+    <div id="add-client" class="hidden">
+        <div class="card">
+            <button class="back-btn" onclick="showDashboard()">← Back</button>
+            <h2 style="margin-bottom: 1rem;">Add New Client</h2>
+            <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-input" id="name" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="phone">
+            </div>
+            <button class="btn btn-primary" onclick="saveClient()">Add Client</button>
+        </div>
+    </div>
+
+    <!-- Client Detail -->
+    <div id="client-detail" class="hidden">
+        <button class="back-btn" onclick="showDashboard()">← Back</button>
+        
+        <div class="card">
+            <h2 id="detail-name"></h2>
+            <p id="detail-email" style="color: #666;"></p>
+            <p id="detail-phone" style="color: #666;"></p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                <button class="tab" onclick="switchTab('purchases')">Purchases</button>
+                <button class="tab" onclick="switchTab('messages')">Messages</button>
+                <button class="tab" onclick="switchTab('wishlist')">Wishlist</button>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="tab-overview">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div style="color: #666; font-size: 0.9rem;">Purchases</div>
+                        <div style="font-size: 2rem;" id="stat-purchases">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="color: #666; font-size: 0.9rem;">Messages</div>
+                        <div style="font-size: 2rem;" id="stat-messages">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchases Tab -->
+            <div id="tab-purchases" class="hidden">
+                <button class="btn btn-primary" onclick="startPurchase()">+ Add Purchase</button>
+                <div id="purchase-list"></div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="tab-messages" class="hidden">
+                <button class="btn btn-primary" onclick="startMessage()">+ Log Message</button>
+                <div id="message-list"></div>
+            </div>
+
+            <!-- Wishlist Tab -->
+            <div id="tab-wishlist" class="hidden">
+                <button class="btn btn-primary" onclick="startWishlistItem()">+ Add Item They Want</button>
+                <div id="wishlist-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Purchase Form -->
+    <div id="add-purchase-form" class="hidden">
+        <div class="card">
+            <button class="back-btn" onclick="cancelPurchase()">← Cancel</button>
+            <h3 style="margin-bottom: 1rem;">Add Purchase</h3>
+            
+            <label class="upload-label" for="receipt-photo">
+                📸 Upload Receipt Photo (Optional)
+                <input type="file" id="receipt-photo" accept="image/*" onchange="previewImage(this, 'receipt-preview')">
+            </label>
+            <div id="receipt-preview"></div>
+            
+            <div class="form-group">
+                <label class="form-label">Item Name *</label>
+                <input type="text" class="form-input" id="purchase-item" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Price</label>
+                <input type="text" class="form-input" id="purchase-price" placeholder="$1,200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Size</label>
+                <input type="text" class="form-input" id="purchase-size" placeholder="Optional">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <input type="text" class="form-input" id="purchase-color" placeholder="Optional">
+            </div>
+            <button class="btn btn-primary" onclick="savePurchase()">Save Purchase</button>
+        </div>
+    </div>
+
+    <!-- Add Message Form -->
+    <div id="add-message-form" class="hidden">
+        <div class="card">
+            <button class="back-btn" onclick="cancelMessage()">← Cancel</button>
+            <h3 style="margin-bottom: 1rem;">Log Message</h3>
+            
+            <label class="upload-label" for="message-photo">
+                📸 Upload Screenshot (Optional)
+                <input type="file" id="message-photo" accept="image/*" onchange="previewImage(this, 'message-preview')">
+            </label>
+            <div id="message-preview"></div>
+            
+            <div class="form-group">
+                <label class="form-label">Summary *</label>
+                <textarea class="form-textarea" id="message-summary" required></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sentiment</label>
+                <select class="form-input" id="message-sentiment">
+                    <option value="positive">Positive</option>
+                    <option value="neutral" selected>Neutral</option>
+                    <option value="concerned">Concerned</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveMessage()">Save Message</button>
+        </div>
+    </div>
+
+    <!-- Add Wishlist Item Form -->
+    <div id="add-wishlist-form" class="hidden">
+        <div class="card">
+            <button class="back-btn" onclick="cancelWishlistItem()">← Cancel</button>
+            <h3 style="margin-bottom: 1rem;">Add Item They Want</h3>
+            
+            <label class="upload-label" for="wishlist-photo">
+                📸 Upload Photo of Item *
+                <input type="file" id="wishlist-photo" accept="image/*" onchange="previewImage(this, 'wishlist-preview')" required>
+            </label>
+            <div id="wishlist-preview"></div>
+            
+            <div class="form-group">
+                <label class="form-label">Item Description *</label>
+                <input type="text" class="form-input" id="wishlist-description" placeholder="e.g., Gold chain necklace, 18in" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Approximate Price Range</label>
+                <input type="text" class="form-input" id="wishlist-price" placeholder="e.g., $800-1200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea class="form-textarea" id="wishlist-notes" placeholder="Any specific details they mentioned..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-input" id="wishlist-status">
+                    <option value="looking" selected>Still Looking</option>
+                    <option value="found">Found It!</option>
+                    <option value="not-interested">Not Interested Anymore</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveWishlistItem()">Save to Wishlist</button>
+        </div>
+    </div>
+
+    <script>
+        let clients = [];
+        let currentClient = null;
+
+        // Load data
+        function loadData() {
+            const saved = localStorage.getItem('clientele_data');
+            if (saved) {
+                clients = JSON.parse(saved);
+            }
+            renderDashboard();
+            loadSettings();
+        }
+
+        // Save data
+        function saveData() {
+            localStorage.setItem('clientele_data', JSON.stringify(clients));
+        }
+        
+        // Settings Management
+        let appSettings = {
+            apiKey: null,
+            features: {
+                messageAI: true,
+                receiptAI: true,
+                briefAI: true
+            }
+        };
+        
+        function loadSettings() {
+            const saved = localStorage.getItem('clientele_settings');
+            if (saved) {
+                appSettings = JSON.parse(saved);
+            }
+            updateSettingsUI();
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('clientele_settings', JSON.stringify(appSettings));
+        }
+        
+        function showSettings() {
+            hideAll();
+            document.getElementById('settings-view').classList.remove('hidden');
+            updateSettingsUI();
+        }
+        
+        function updateSettingsUI() {
+            // Update API key status
+            const hasKey = !!appSettings.apiKey;
+            const statusIcon = document.getElementById('api-status-icon');
+            const statusText = document.getElementById('api-status-text');
+            const keyDisplay = document.getElementById('api-key-display');
+            const addBtn = document.getElementById('add-api-key-btn');
+            const removeBtn = document.getElementById('remove-api-key-btn');
+            
+            if (hasKey) {
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'AI features enabled';
+                statusText.style.color = '#059669';
+                keyDisplay.classList.remove('hidden');
+                
+                // Mask API key (show first 10 and last 4 chars)
+                const key = appSettings.apiKey;
+                const masked = key.substring(0, 10) + '...' + key.substring(key.length - 4);
+                document.getElementById('api-key-masked').textContent = masked;
+                
+                addBtn.textContent = 'Update API Key';
+                removeBtn.classList.remove('hidden');
+            } else {
+                statusIcon.textContent = '⚪';
+                statusText.textContent = 'AI features disabled - Add API key to enable';
+                statusText.style.color = '#666';
+                keyDisplay.classList.add('hidden');
+                addBtn.textContent = 'Add API Key';
+                removeBtn.classList.add('hidden');
+            }
+            
+            // Update feature toggles
+            document.getElementById('toggle-message-ai').checked = appSettings.features.messageAI;
+            document.getElementById('toggle-receipt-ai').checked = appSettings.features.receiptAI;
+            document.getElementById('toggle-brief-ai').checked = appSettings.features.briefAI;
+            
+            // Disable toggles if no API key
+            document.getElementById('toggle-message-ai').disabled = !hasKey;
+            document.getElementById('toggle-receipt-ai').disabled = !hasKey;
+            document.getElementById('toggle-brief-ai').disabled = !hasKey;
+        }
+        
+        function addApiKey() {
+            // Show the input form
+            document.getElementById('api-key-form').classList.remove('hidden');
+            document.getElementById('add-api-key-btn').classList.add('hidden');
+            document.getElementById('api-key-input').value = '';
+            document.getElementById('api-key-input').focus();
+        }
+        
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            
+            if (!key) {
+                alert('Please enter an API key');
+                return;
+            }
+            
+            // Basic validation
+            if (!key.startsWith('sk-ant-')) {
+                alert('Invalid API key format. It should start with "sk-ant-"');
+                return;
+            }
+            
+            appSettings.apiKey = key;
+            saveSettings();
+            updateSettingsUI();
+            
+            // Hide form
+            document.getElementById('api-key-form').classList.add('hidden');
+            document.getElementById('add-api-key-btn').classList.remove('hidden');
+            
+            alert('✅ API key saved! AI features are now enabled.');
+        }
+        
+        function cancelApiKey() {
+            document.getElementById('api-key-form').classList.add('hidden');
+            document.getElementById('add-api-key-btn').classList.remove('hidden');
+        }
+        
+        function removeApiKey() {
+            if (!confirm('Remove API key? AI features will be disabled.')) return;
+            
+            appSettings.apiKey = null;
+            appSettings.features.messageAI = false;
+            appSettings.features.receiptAI = false;
+            appSettings.features.briefAI = false;
+            saveSettings();
+            updateSettingsUI();
+            alert('API key removed. AI features disabled.');
+        }
+        
+        function toggleFeature(feature, enabled) {
+            if (!appSettings.apiKey) {
+                alert('Please add an API key first to enable AI features.');
+                updateSettingsUI();
+                return;
+            }
+            
+            appSettings.features[feature] = enabled;
+            saveSettings();
+        }
+        
+        function exportData() {
+            const exportObj = {
+                clients: clients,
+                settings: appSettings,
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+            
+            const dataStr = JSON.stringify(exportObj, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `clientele-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            alert('✅ Data exported! Check your downloads folder.');
+        }
+        
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        
+                        if (!imported.clients) {
+                            throw new Error('Invalid backup file');
+                        }
+                        
+                        if (confirm('Import this backup? This will REPLACE all current data.')) {
+                            clients = imported.clients || [];
+                            if (imported.settings) {
+                                appSettings = imported.settings;
+                            }
+                            saveData();
+                            saveSettings();
+                            showDashboard();
+                            alert('✅ Data imported successfully!');
+                        }
+                    } catch (error) {
+                        alert('❌ Error importing file. Make sure it\'s a valid Clientèle backup.');
+                        console.error(error);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        function clearAllData() {
+            if (!confirm('⚠️ DELETE ALL DATA?\n\nThis will permanently delete:\n• All clients\n• All purchases\n• All messages\n• All wishlist items\n\nThis cannot be undone!')) {
+                return;
+            }
+            
+            if (!confirm('Are you ABSOLUTELY sure? This is your last chance!')) {
+                return;
+            }
+            
+            clients = [];
+            localStorage.removeItem('clientele_data');
+            saveData();
+            showDashboard();
+            alert('All data cleared.');
+        }
+        
+        // Make settings functions globally accessible
+        window.showSettings = showSettings;
+        window.addApiKey = addApiKey;
+        window.saveApiKey = saveApiKey;
+        window.cancelApiKey = cancelApiKey;
+        window.removeApiKey = removeApiKey;
+        window.toggleFeature = toggleFeature;
+        window.exportData = exportData;
+        window.importData = importData;
+        window.clearAllData = clearAllData;
+        window.rankAllClients = rankAllClients;
+        window.filterByTier = filterByTier;
+
+        // Show views
+        function showDashboard() {
+            hideAll();
+            document.getElementById('dashboard').classList.remove('hidden');
+            renderDashboard();
+        }
+
+        function showAddClient() {
+            hideAll();
+            document.getElementById('add-client').classList.remove('hidden');
+        }
+
+        function showClientDetail(id) {
+            currentClient = clients.find(c => c.id === id);
+            hideAll();
+            document.getElementById('client-detail').classList.remove('hidden');
+            renderClientDetail();
+        }
+
+        function startPurchase() {
+            hideAll();
+            document.getElementById('add-purchase-form').classList.remove('hidden');
+        }
+
+        function startMessage() {
+            hideAll();
+            document.getElementById('add-message-form').classList.remove('hidden');
+        }
+
+        function startWishlistItem() {
+            hideAll();
+            document.getElementById('add-wishlist-form').classList.remove('hidden');
+        }
+
+        function cancelPurchase() {
+            clearPurchaseForm();
+            showClientDetail(currentClient.id);
+        }
+
+        function cancelMessage() {
+            clearMessageForm();
+            showClientDetail(currentClient.id);
+        }
+
+        function cancelWishlistItem() {
+            clearWishlistForm();
+            showClientDetail(currentClient.id);
+        }
+
+        function hideAll() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('add-client').classList.add('hidden');
+            document.getElementById('client-detail').classList.add('hidden');
+            document.getElementById('add-purchase-form').classList.add('hidden');
+            document.getElementById('add-message-form').classList.add('hidden');
+            document.getElementById('add-wishlist-form').classList.add('hidden');
+            document.getElementById('daily-brief').classList.add('hidden');
+            document.getElementById('settings-view').classList.add('hidden');
+        }
+
+        // Save client
+        function saveClient() {
+            const name = document.getElementById('name').value;
+            if (!name) return alert('Name is required');
+            
+            const client = {
+                id: Date.now().toString(),
+                name: name,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                purchases: [],
+                messages: [],
+                wishlist: [],
+                tier: 'potential', // potential, active, vip, dormant
+                score: 0,
+                engagement: {
+                    responseRate: 0,
+                    totalMessages: 0,
+                    responsesReceived: 0
+                },
+                createdAt: new Date().toISOString(),
+                lastPurchase: null,
+                lastContact: new Date().toISOString()
+            };
+            
+            clients.push(client);
+            saveData();
+            
+            document.getElementById('name').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
+            
+            showDashboard();
+        }
+
+        // Save purchase
+        function savePurchase() {
+            const item = document.getElementById('purchase-item').value;
+            if (!item) return alert('Item name is required');
+            
+            const photoInput = document.getElementById('receipt-photo');
+            const photoData = photoInput.files.length > 0 ? 'photo-attached' : null;
+            
+            const purchase = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                item: item,
+                price: document.getElementById('purchase-price').value,
+                size: document.getElementById('purchase-size').value,
+                color: document.getElementById('purchase-color').value,
+                hasPhoto: !!photoData
+            };
+            
+            currentClient.purchases.push(purchase);
+            currentClient.lastPurchase = new Date().toISOString();
+            currentClient.lastContact = new Date().toISOString();
+            
+            const idx = clients.findIndex(c => c.id === currentClient.id);
+            clients[idx] = currentClient;
+            saveData();
+            
+            clearPurchaseForm();
+            showClientDetail(currentClient.id);
+        }
+
+        // Save message
+        function saveMessage() {
+            const summary = document.getElementById('message-summary').value;
+            if (!summary) return alert('Summary is required');
+            
+            const photoInput = document.getElementById('message-photo');
+            const photoData = photoInput.files.length > 0 ? 'photo-attached' : null;
+            
+            // Ask if client responded
+            const didRespond = confirm('Did the client respond to you?');
+            
+            const message = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                summary: summary,
+                sentiment: document.getElementById('message-sentiment').value,
+                hasPhoto: !!photoData,
+                clientResponded: didRespond
+            };
+            
+            currentClient.messages.push(message);
+            
+            // Update engagement metrics
+            if (!currentClient.engagement) {
+                currentClient.engagement = {
+                    totalMessages: 0,
+                    responsesReceived: 0,
+                    responseRate: 0
+                };
+            }
+            
+            currentClient.engagement.totalMessages++;
+            if (didRespond) {
+                currentClient.engagement.responsesReceived++;
+            }
+            currentClient.engagement.responseRate = 
+                (currentClient.engagement.responsesReceived / currentClient.engagement.totalMessages * 100).toFixed(0);
+            
+            currentClient.lastContact = new Date().toISOString();
+            
+            const idx = clients.findIndex(c => c.id === currentClient.id);
+            clients[idx] = currentClient;
+            saveData();
+            
+            clearMessageForm();
+            showClientDetail(currentClient.id);
+        }
+
+        // Save wishlist item
+        function saveWishlistItem() {
+            const description = document.getElementById('wishlist-description').value;
+            const photoInput = document.getElementById('wishlist-photo');
+            
+            if (!description) return alert('Item description is required');
+            if (!photoInput.files.length) return alert('Please upload a photo of the item');
+            
+            // Read the photo as base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wishlistItem = {
+                    id: Date.now().toString(),
+                    date: new Date().toISOString(),
+                    description: description,
+                    priceRange: document.getElementById('wishlist-price').value,
+                    notes: document.getElementById('wishlist-notes').value,
+                    status: document.getElementById('wishlist-status').value,
+                    photo: e.target.result
+                };
+                
+                currentClient.wishlist = currentClient.wishlist || [];
+                currentClient.wishlist.push(wishlistItem);
+                
+                const idx = clients.findIndex(c => c.id === currentClient.id);
+                clients[idx] = currentClient;
+                saveData();
+                
+                clearWishlistForm();
+                showClientDetail(currentClient.id);
+            };
+            reader.readAsDataURL(photoInput.files[0]);
+        }
+
+        // Clear forms
+        function clearPurchaseForm() {
+            document.getElementById('purchase-item').value = '';
+            document.getElementById('purchase-price').value = '';
+            document.getElementById('purchase-size').value = '';
+            document.getElementById('purchase-color').value = '';
+            document.getElementById('receipt-photo').value = '';
+            document.getElementById('receipt-preview').innerHTML = '';
+        }
+
+        function clearMessageForm() {
+            document.getElementById('message-summary').value = '';
+            document.getElementById('message-sentiment').value = 'neutral';
+            document.getElementById('message-photo').value = '';
+            document.getElementById('message-preview').innerHTML = '';
+        }
+
+        function clearWishlistForm() {
+            document.getElementById('wishlist-description').value = '';
+            document.getElementById('wishlist-price').value = '';
+            document.getElementById('wishlist-notes').value = '';
+            document.getElementById('wishlist-status').value = 'looking';
+            document.getElementById('wishlist-photo').value = '';
+            document.getElementById('wishlist-preview').innerHTML = '';
+        }
+
+        // Preview image
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="preview-img">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('tab-overview').classList.add('hidden');
+            document.getElementById('tab-purchases').classList.add('hidden');
+            document.getElementById('tab-messages').classList.add('hidden');
+            document.getElementById('tab-wishlist').classList.add('hidden');
+            
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+        }
+
+        // Render dashboard
+        function renderDashboard() {
+            document.getElementById('count').textContent = clients.length;
+            renderClientsList(clients);
+        }
+        
+        let currentTierFilter = 'all';
+        
+        function filterByTier(tier) {
+            currentTierFilter = tier;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter clients
+            let filtered = clients;
+            if (tier !== 'all') {
+                filtered = clients.filter(c => (c.tier || 'potential') === tier);
+            }
+            
+            renderClientsList(filtered);
+        }
+
+        function renderClientsList(list) {
+            const container = document.getElementById('client-list');
+            
+            if (list.length === 0) {
+                if (currentTierFilter === 'all') {
+                    container.innerHTML = '<div class="empty">No clients yet. Add your first client!</div>';
+                } else {
+                    container.innerHTML = `<div class="empty">No ${currentTierFilter} tier clients yet</div>`;
+                }
+                return;
+            }
+            
+            const tierIcons = {
+                vip: '💎',
+                active: '⭐',
+                potential: '📊',
+                dormant: '😴'
+            };
+            
+            const tierLabels = {
+                vip: 'VIP',
+                active: 'Active',
+                potential: 'Potential',
+                dormant: 'Dormant'
+            };
+            
+            container.innerHTML = list.map(c => {
+                const tier = c.tier || 'potential';
+                const score = c.score || 0;
+                return `
+                    <div class="client-item" onclick="showClientDetail('${c.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem;">
+                                    ${c.name}
+                                    <span class="tier-badge tier-${tier}">${tierIcons[tier]} ${tierLabels[tier]}</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: #666;">${c.email || 'No email'}</div>
+                                ${score > 0 ? `<div class="score-display">Score: ${score}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render client detail
+        function renderClientDetail() {
+            document.getElementById('detail-name').textContent = currentClient.name;
+            document.getElementById('detail-email').textContent = currentClient.email || '';
+            document.getElementById('detail-phone').textContent = currentClient.phone || '';
+            document.getElementById('stat-purchases').textContent = currentClient.purchases.length;
+            document.getElementById('stat-messages').textContent = currentClient.messages.length;
+            
+            // Render purchases
+            const purchaseList = document.getElementById('purchase-list');
+            if (currentClient.purchases.length === 0) {
+                purchaseList.innerHTML = '<div class="empty">No purchases yet</div>';
+            } else {
+                purchaseList.innerHTML = currentClient.purchases.map(p => `
+                    <div class="item-card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.85rem; color: #666;">${new Date(p.date).toLocaleDateString()}</span>
+                            <span style="font-weight: 600;">${p.price || 'N/A'}</span>
+                        </div>
+                        <div style="font-weight: 500; margin-bottom: 0.25rem;">${p.item}</div>
+                        <div style="font-size: 0.9rem; color: #666;">
+                            ${p.size ? 'Size: ' + p.size : ''}
+                            ${p.color ? ' • Color: ' + p.color : ''}
+                            ${p.hasPhoto ? ' • 📸 Photo attached' : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render messages
+            const messageList = document.getElementById('message-list');
+            if (currentClient.messages.length === 0) {
+                messageList.innerHTML = '<div class="empty">No messages yet</div>';
+            } else {
+                messageList.innerHTML = currentClient.messages.map(m => `
+                    <div class="item-card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.85rem; color: #666;">${new Date(m.date).toLocaleDateString()}</span>
+                            <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: #f5f5f5; border-radius: 4px;">${m.sentiment}</span>
+                        </div>
+                        <div>${m.summary}</div>
+                        ${m.hasPhoto ? '<div style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">📸 Screenshot attached</div>' : ''}
+                    </div>
+                `).join('');
+            }
+            
+            // Render wishlist
+            const wishlistList = document.getElementById('wishlist-list');
+            const wishlist = currentClient.wishlist || [];
+            if (wishlist.length === 0) {
+                wishlistList.innerHTML = '<div class="empty">No wishlist items yet<br><br>When clients ask about items, add them here so you remember!</div>';
+            } else {
+                wishlistList.innerHTML = wishlist.map(w => {
+                    const statusColors = {
+                        looking: '#fef3c7',
+                        found: '#dcfce7',
+                        'not-interested': '#fee2e2'
+                    };
+                    const statusLabels = {
+                        looking: 'Still Looking',
+                        found: 'Found It!',
+                        'not-interested': 'Not Interested'
+                    };
+                    return `
+                        <div class="item-card">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.85rem; color: #666;">${new Date(w.date).toLocaleDateString()}</span>
+                                <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: ${statusColors[w.status]}; border-radius: 4px;">${statusLabels[w.status]}</span>
+                            </div>
+                            ${w.photo ? `<img src="${w.photo}" style="max-width: 100%; border-radius: 8px; margin-bottom: 0.5rem;">` : ''}
+                            <div style="font-weight: 500; margin-bottom: 0.25rem;">${w.description}</div>
+                            ${w.priceRange ? `<div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Price: ${w.priceRange}</div>` : ''}
+                            ${w.notes ? `<div style="font-size: 0.9rem; color: #666; font-style: italic;">${w.notes}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Initialize
+        loadData();
+        
+        // Setup event listeners for settings buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a moment for DOM to be ready
+            setTimeout(function() {
+                const addBtn = document.getElementById('add-api-key-btn');
+                const saveBtn = document.getElementById('save-api-key-btn');
+                const cancelBtn = document.getElementById('cancel-api-key-btn');
+                const removeBtn = document.getElementById('remove-api-key-btn');
+                
+                if (addBtn) {
+                    addBtn.addEventListener('click', addApiKey);
+                }
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', saveApiKey);
+                }
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', cancelApiKey);
+                }
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', removeApiKey);
+                }
+            }, 100);
+        });
+
+        // Rank all clients by value
+        function rankAllClients() {
+            if (clients.length === 0) {
+                return alert('Add some clients first!');
+            }
+            
+            if (!confirm('Analyze and rank all clients based on purchase history, engagement, and activity? This will update their tier rankings.')) {
+                return;
+            }
+            
+            const now = new Date();
+            
+            clients.forEach(client => {
+                let score = 0;
+                
+                // Initialize if missing
+                if (!client.engagement) {
+                    client.engagement = { totalMessages: 0, responsesReceived: 0, responseRate: 0 };
+                }
+                
+                // 1. PURCHASE SCORING (40 points max)
+                const purchases = client.purchases || [];
+                const totalSpent = purchases.reduce((sum, p) => {
+                    const price = parseFloat((p.price || '0').replace(/[^0-9.]/g, ''));
+                    return sum + (isNaN(price) ? 0 : price);
+                }, 0);
+                
+                // Total spending (max 20 points)
+                if (totalSpent > 5000) score += 20;
+                else if (totalSpent > 2000) score += 15;
+                else if (totalSpent > 1000) score += 10;
+                else if (totalSpent > 500) score += 5;
+                
+                // Purchase frequency (max 10 points)
+                if (purchases.length >= 5) score += 10;
+                else if (purchases.length >= 3) score += 7;
+                else if (purchases.length >= 2) score += 4;
+                else if (purchases.length >= 1) score += 2;
+                
+                // Recency of last purchase (max 10 points)
+                if (client.lastPurchase) {
+                    const daysSince = Math.floor((now - new Date(client.lastPurchase)) / (1000 * 60 * 60 * 24));
+                    if (daysSince <= 30) score += 10;
+                    else if (daysSince <= 60) score += 7;
+                    else if (daysSince <= 90) score += 4;
+                    else if (daysSince <= 180) score += 2;
+                }
+                
+                // 2. ENGAGEMENT SCORING (30 points max)
+                const responseRate = client.engagement.responseRate || 0;
+                
+                // Response rate (max 15 points)
+                if (responseRate >= 80) score += 15;
+                else if (responseRate >= 60) score += 12;
+                else if (responseRate >= 40) score += 8;
+                else if (responseRate >= 20) score += 4;
+                
+                // Message volume (max 10 points)
+                const totalMessages = client.engagement.totalMessages || 0;
+                if (totalMessages >= 10) score += 10;
+                else if (totalMessages >= 5) score += 7;
+                else if (totalMessages >= 3) score += 4;
+                else if (totalMessages >= 1) score += 2;
+                
+                // Recent contact (max 5 points)
+                const daysSinceContact = Math.floor((now - new Date(client.lastContact || client.createdAt)) / (1000 * 60 * 60 * 24));
+                if (daysSinceContact <= 14) score += 5;
+                else if (daysSinceContact <= 30) score += 3;
+                else if (daysSinceContact <= 60) score += 1;
+                
+                // 3. INTENT SCORING (20 points max)
+                const wishlist = client.wishlist || [];
+                const activeWishlist = wishlist.filter(w => w.status === 'looking');
+                
+                // Active wishlist items (max 10 points)
+                if (activeWishlist.length >= 3) score += 10;
+                else if (activeWishlist.length >= 2) score += 7;
+                else if (activeWishlist.length >= 1) score += 4;
+                
+                // Positive sentiment (max 10 points)
+                const messages = client.messages || [];
+                const positiveMsgs = messages.filter(m => m.sentiment === 'positive').length;
+                if (positiveMsgs >= 5) score += 10;
+                else if (positiveMsgs >= 3) score += 7;
+                else if (positiveMsgs >= 1) score += 4;
+                
+                // 4. PENALTY: Dormancy (subtract up to 20 points)
+                if (daysSinceContact > 180) score -= 20;
+                else if (daysSinceContact > 120) score -= 10;
+                else if (daysSinceContact > 90) score -= 5;
+                
+                // Response rate penalty (ghost clients)
+                if (totalMessages >= 3 && responseRate < 20) score -= 15;
+                
+                // Store score
+                client.score = Math.max(0, score); // Don't go negative
+                
+                // ASSIGN TIER
+                if (score >= 60) client.tier = 'vip';
+                else if (score >= 35) client.tier = 'active';
+                else if (score >= 15) client.tier = 'potential';
+                else client.tier = 'dormant';
+            });
+            
+            // Sort by score descending
+            clients.sort((a, b) => (b.score || 0) - (a.score || 0));
+            
+            saveData();
+            renderDashboard();
+            
+            // Show summary
+            const vipCount = clients.filter(c => c.tier === 'vip').length;
+            const activeCount = clients.filter(c => c.tier === 'active').length;
+            const potentialCount = clients.filter(c => c.tier === 'potential').length;
+            const dormantCount = clients.filter(c => c.tier === 'dormant').length;
+            
+            alert(`✅ Ranking Complete!\n\n💎 VIP: ${vipCount}\n⭐ Active: ${activeCount}\n📊 Potential: ${potentialCount}\n😴 Dormant: ${dormantCount}\n\nClients are now sorted by value. Check the filters to see each tier!`);
+        }
+
+        // Generate Daily Brief
+        async function generateDailyBrief() {
+            hideAll();
+            document.getElementById('daily-brief').classList.remove('hidden');
+            document.getElementById('brief-date').textContent = new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            const briefContent = document.getElementById('brief-content');
+            briefContent.innerHTML = '<div style="text-align: center; padding: 2rem;"><div style="font-size: 2rem; margin-bottom: 1rem;">🧠</div>Analyzing your client book...</div>';
+            
+            // Analyze data
+            const analysis = analyzeClientData();
+            
+            // Check if API key exists
+            const apiKey = localStorage.getItem('anthropic_api_key');
+            
+            if (!apiKey) {
+                // Show manual analysis
+                displayManualBrief(analysis);
+            } else {
+                // Use AI to generate smart brief
+                await displayAIBrief(analysis, apiKey);
+            }
+        }
+
+        // Analyze client data to find actionable items
+        function analyzeClientData() {
+            const now = new Date();
+            const analysis = {
+                needsContact: [],
+                activeWishlist: [],
+                concernedClients: [],
+                recentPurchases: [],
+                stats: {
+                    totalClients: clients.length,
+                    totalPurchases: 0,
+                    totalWishlistItems: 0
+                }
+            };
+
+            clients.forEach(client => {
+                // Calculate days since last contact
+                const lastContact = new Date(client.createdAt);
+                const daysSince = Math.floor((now - lastContact) / (1000 * 60 * 60 * 24));
+                
+                // Clients who need contact (30+ days)
+                if (daysSince >= 30) {
+                    analysis.needsContact.push({
+                        client: client,
+                        daysSince: daysSince
+                    });
+                }
+
+                // Active wishlist items (status = "looking")
+                const wishlist = client.wishlist || [];
+                wishlist.forEach(item => {
+                    if (item.status === 'looking') {
+                        const itemAge = Math.floor((now - new Date(item.date)) / (1000 * 60 * 60 * 24));
+                        analysis.activeWishlist.push({
+                            client: client,
+                            item: item,
+                            daysSince: itemAge
+                        });
+                    }
+                });
+
+                // Recent concerned messages (last 30 days)
+                const recentMessages = client.messages.filter(m => {
+                    const msgDate = new Date(m.date);
+                    const daysAgo = Math.floor((now - msgDate) / (1000 * 60 * 60 * 24));
+                    return daysAgo <= 30 && m.sentiment === 'concerned';
+                });
+
+                if (recentMessages.length > 0) {
+                    analysis.concernedClients.push({
+                        client: client,
+                        messages: recentMessages
+                    });
+                }
+
+                // Recent purchases (last 7 days)
+                const recentPurchases = client.purchases.filter(p => {
+                    const purchaseDate = new Date(p.date);
+                    const daysAgo = Math.floor((now - purchaseDate) / (1000 * 60 * 60 * 24));
+                    return daysAgo <= 7;
+                });
+
+                analysis.recentPurchases.push(...recentPurchases.map(p => ({
+                    client: client,
+                    purchase: p
+                })));
+
+                // Stats
+                analysis.stats.totalPurchases += client.purchases.length;
+                analysis.stats.totalWishlistItems += wishlist.length;
+            });
+
+            // Sort by priority
+            analysis.needsContact.sort((a, b) => b.daysSince - a.daysSince);
+            analysis.activeWishlist.sort((a, b) => b.daysSince - a.daysSince);
+
+            return analysis;
+        }
+
+        // Display manual brief (no AI)
+        function displayManualBrief(analysis) {
+            let html = '';
+
+            // Summary stats
+            html += `<div style="background: #f5f5f5; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">`;
+            html += `<div style="font-weight: 600; margin-bottom: 0.5rem;">📊 Quick Stats</div>`;
+            html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">`;
+            html += `<div>${analysis.stats.totalClients} clients</div>`;
+            html += `<div>${analysis.stats.totalPurchases} total purchases</div>`;
+            html += `<div>${analysis.activeWishlist.length} active wishlist items</div>`;
+            html += `<div>${analysis.needsContact.length} need contact</div>`;
+            html += `</div></div>`;
+
+            // Priority Actions
+            let actionCount = 0;
+
+            if (analysis.concernedClients.length > 0) {
+                html += `<div class="section-header">🚨 High Priority</div>`;
+                analysis.concernedClients.slice(0, 5).forEach((item, idx) => {
+                    html += `<div class="action-item priority-high" id="action-${actionCount}">`;
+                    html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                    html += `<div>`;
+                    html += `<div style="font-weight: 500;">${item.client.name} needs attention</div>`;
+                    html += `<div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">Recent message showed concern - follow up ASAP</div>`;
+                    html += `</div></div>`;
+                    actionCount++;
+                });
+            }
+
+            if (analysis.needsContact.length > 0) {
+                html += `<div class="section-header">📞 Need to Contact</div>`;
+                analysis.needsContact.slice(0, 5).forEach((item, idx) => {
+                    html += `<div class="action-item priority-medium" id="action-${actionCount}">`;
+                    html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                    html += `<div>`;
+                    html += `<div style="font-weight: 500;">Reach out to ${item.client.name}</div>`;
+                    html += `<div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">Last contact: ${item.daysSince} days ago</div>`;
+                    html += `</div></div>`;
+                    actionCount++;
+                });
+            }
+
+            if (analysis.activeWishlist.length > 0) {
+                html += `<div class="section-header">🎁 Wishlist Follow-ups</div>`;
+                analysis.activeWishlist.slice(0, 5).forEach((item, idx) => {
+                    html += `<div class="action-item priority-low" id="action-${actionCount}">`;
+                    html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                    html += `<div>`;
+                    html += `<div style="font-weight: 500;">${item.client.name}: ${item.item.description}</div>`;
+                    html += `<div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">Looking for ${item.daysSince} days - check if available</div>`;
+                    html += `</div></div>`;
+                    actionCount++;
+                });
+            }
+
+            if (actionCount === 0) {
+                html += `<div style="text-align: center; color: #666; padding: 2rem;">`;
+                html += `<div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>`;
+                html += `<div style="font-weight: 500; margin-bottom: 0.5rem;">You're all caught up!</div>`;
+                html += `<div style="font-size: 0.9rem;">No urgent actions right now. Keep building those relationships!</div>`;
+                html += `</div>`;
+            } else {
+                html += `<div style="background: #f0fdf4; border: 1px solid #86efac; padding: 1rem; border-radius: 8px; margin-top: 1.5rem; font-size: 0.9rem;">`;
+                html += `💡 <strong>Tip:</strong> Set up AI analysis (tap ⚙️ in header) for even smarter insights and personalized recommendations!`;
+                html += `</div>`;
+            }
+
+            document.getElementById('brief-content').innerHTML = html;
+        }
+
+        // Toggle action item completion
+        function toggleActionItem(id) {
+            const item = document.getElementById(`action-${id}`);
+            item.classList.toggle('completed');
+        }
+
+        // Display AI-powered brief
+        async function displayAIBrief(analysis, apiKey) {
+            try {
+                // Prepare data summary for AI
+                const summary = {
+                    totalClients: analysis.stats.totalClients,
+                    needsContactCount: analysis.needsContact.length,
+                    activeWishlistCount: analysis.activeWishlist.length,
+                    concernedClientsCount: analysis.concernedClients.length,
+                    topNeedsContact: analysis.needsContact.slice(0, 5).map(item => ({
+                        name: item.client.name,
+                        daysSinceContact: item.daysSince
+                    })),
+                    topWishlist: analysis.activeWishlist.slice(0, 5).map(item => ({
+                        clientName: item.client.name,
+                        item: item.item.description,
+                        daysSeeking: item.daysSince
+                    })),
+                    concernedClients: analysis.concernedClients.map(item => ({
+                        name: item.client.name,
+                        recentConcerns: item.messages.length
+                    }))
+                };
+
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 2000,
+                        messages: [{
+                            role: 'user',
+                            content: `You are a luxury retail client management assistant. Analyze this data and create a daily brief with actionable insights.
+
+Data: ${JSON.stringify(summary, null, 2)}
+
+Create a brief that:
+1. Highlights top 3-5 priority actions for today
+2. Identifies patterns or opportunities
+3. Gives specific, actionable recommendations
+4. Is warm, encouraging, and practical
+
+Format as simple text with clear sections. Be concise but insightful. Focus on what actually matters for building client relationships.`
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI analysis failed');
+                }
+
+                const data = await response.json();
+                const briefText = data.content.find(c => c.type === 'text')?.text || 'Unable to generate brief';
+
+                // Display AI brief with action checkboxes
+                let html = `<div style="background: #f0fdf4; border: 1px solid #86efac; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">`;
+                html += `🤖 <strong>AI-Powered Analysis</strong>`;
+                html += `</div>`;
+
+                html += `<div style="white-space: pre-wrap; line-height: 1.6; color: #1c1917;">${briefText}</div>`;
+
+                // Add manual action items below AI analysis
+                html += `<div class="section-header" style="margin-top: 2rem;">✅ Action Checklist</div>`;
+                
+                let actionCount = 0;
+                
+                if (analysis.concernedClients.length > 0) {
+                    analysis.concernedClients.slice(0, 3).forEach(item => {
+                        html += `<div class="action-item priority-high" id="action-${actionCount}">`;
+                        html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                        html += `<div><strong>${item.client.name}</strong> - Follow up on recent concern</div>`;
+                        html += `</div>`;
+                        actionCount++;
+                    });
+                }
+
+                analysis.needsContact.slice(0, 3).forEach(item => {
+                    html += `<div class="action-item priority-medium" id="action-${actionCount}">`;
+                    html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                    html += `<div>Contact <strong>${item.client.name}</strong> (${item.daysSince} days)</div>`;
+                    html += `</div>`;
+                    actionCount++;
+                });
+
+                analysis.activeWishlist.slice(0, 3).forEach(item => {
+                    html += `<div class="action-item priority-low" id="action-${actionCount}">`;
+                    html += `<input type="checkbox" onchange="toggleActionItem(${actionCount})">`;
+                    html += `<div>Check on <strong>${item.item.description}</strong> for ${item.client.name}</div>`;
+                    html += `</div>`;
+                    actionCount++;
+                });
+
+                document.getElementById('brief-content').innerHTML = html;
+
+            } catch (error) {
+                console.error('AI brief error:', error);
+                // Fall back to manual brief
+                displayManualBrief(analysis);
+            }
+        }
+    </script>
+</body>
+</html>
