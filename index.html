@@ -413,9 +413,16 @@
         <button class="back-btn" onclick="showDashboard()">← Back</button>
         
         <div class="card">
-            <h2 id="detail-name"></h2>
-            <p id="detail-email" style="color: #666;"></p>
-            <p id="detail-phone" style="color: #666;"></p>
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <h2 id="detail-name"></h2>
+                    <p id="detail-email" style="color: #666;"></p>
+                    <p id="detail-phone" style="color: #666;"></p>
+                </div>
+                <button onclick="editClient()" style="background: #f5f5f4; border: 1px solid #d4d4d4; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.9rem; cursor: pointer;">
+                    ✏️ Edit
+                </button>
+            </div>
         </div>
 
         <div class="card">
@@ -479,6 +486,25 @@
             <div class="form-group">
                 <label class="form-label">Price</label>
                 <input type="text" class="form-input" id="purchase-price" placeholder="$1,200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Discount %</label>
+                <input type="text" class="form-input" id="purchase-discount" placeholder="e.g., 2% or leave blank">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Net Price (after discount)</label>
+                <input type="text" class="form-input" id="purchase-net" placeholder="Final price before tax">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Shipping</label>
+                <select class="form-input" id="purchase-shipping">
+                    <option value="">No shipping</option>
+                    <option value="$30.00">Yes - $30.00</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Total (with tax)</label>
+                <input type="text" class="form-input" id="purchase-total" placeholder="Final total paid">
             </div>
             <div class="form-group">
                 <label class="form-label">Size</label>
@@ -549,10 +575,37 @@
                 <select class="form-input" id="wishlist-status">
                     <option value="looking" selected>Still Looking</option>
                     <option value="found">Found It!</option>
+                    <option value="pending">Pending</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="paid">Paid</option>
                     <option value="not-interested">Not Interested Anymore</option>
                 </select>
             </div>
             <button class="btn btn-primary" onclick="saveWishlistItem()">Save to Wishlist</button>
+        </div>
+    </div>
+
+    <!-- Edit Client Form -->
+    <div id="edit-client-form" class="hidden">
+        <div class="card">
+            <button class="back-btn" onclick="cancelEditClient()">← Cancel</button>
+            <h2 style="margin-bottom: 1rem;">Edit Client</h2>
+            <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" class="form-input" id="edit-name" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="edit-email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="edit-phone">
+            </div>
+            <button class="btn btn-primary" onclick="saveEditClient()">Save Changes</button>
+            <button class="btn" onclick="deleteClient()" style="width: 100%; background: #fee2e2; color: #991b1b; margin-top: 0.5rem;">
+                Delete Client
+            </button>
         </div>
     </div>
 
@@ -792,6 +845,14 @@
         window.clearAllData = clearAllData;
         window.rankAllClients = rankAllClients;
         window.filterByTier = filterByTier;
+        window.editWishlistItem = editWishlistItem;
+        window.deleteWishlistItem = deleteWishlistItem;
+        window.updateWishlistItem = updateWishlistItem;
+        window.savePurchase = savePurchase;
+        window.editClient = editClient;
+        window.saveEditClient = saveEditClient;
+        window.cancelEditClient = cancelEditClient;
+        window.deleteClient = deleteClient;
 
         // Show views
         function showDashboard() {
@@ -851,6 +912,7 @@
             document.getElementById('add-wishlist-form').classList.add('hidden');
             document.getElementById('daily-brief').classList.add('hidden');
             document.getElementById('settings-view').classList.add('hidden');
+            document.getElementById('edit-client-form').classList.add('hidden');
         }
 
         // Save client
@@ -889,7 +951,212 @@
         }
 
         // Save purchase
-        function savePurchase() {
+        async function savePurchase() {
+            console.log('savePurchase called');
+            const item = document.getElementById('purchase-item').value;
+            const photoInput = document.getElementById('receipt-photo');
+            
+            console.log('Has photo:', photoInput.files.length > 0);
+            console.log('API Key exists:', !!appSettings.apiKey);
+            console.log('Receipt AI enabled:', appSettings.features.receiptAI);
+            
+            // If AI is enabled and photo is uploaded, analyze it first
+            if (appSettings.apiKey && appSettings.features.receiptAI && photoInput.files.length > 0) {
+                console.log('Starting AI analysis...');
+                await analyzeReceipt(photoInput.files[0]);
+                return; // analyzeReceipt will call savePurchaseData when done
+            }
+            
+            // Otherwise, require manual item name
+            if (!item) {
+                alert('Item name is required');
+                return;
+            }
+            
+            console.log('Saving without AI');
+            savePurchaseData();
+        }
+        
+        async function analyzeReceipt(file) {
+            // Show loading state
+            const btn = document.querySelector('#add-purchase-form .btn-primary');
+            const originalText = btn.textContent;
+            btn.textContent = 'Analyzing receipt...';
+            btn.disabled = true;
+            
+            try {
+                console.log('Step 1: Starting image conversion...');
+                console.log('File type:', file.type);
+                console.log('File size:', file.size);
+                
+                // Convert image to base64
+                const base64Data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        console.log('Step 2: Image converted to base64');
+                        resolve(reader.result.split(',')[1]);
+                    };
+                    reader.onerror = () => {
+                        console.error('Step 2 FAILED: Image read error');
+                        reject(new Error('Failed to read image'));
+                    };
+                    reader.readAsDataURL(file);
+                });
+                
+                console.log('Step 3: Preparing API request...');
+                console.log('API Key length:', appSettings.apiKey.length);
+                
+                // Call Claude API
+                console.log('Step 4: Sending request to API...');
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': appSettings.apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'image',
+                                    source: {
+                                        type: 'base64',
+                                        media_type: file.type,
+                                        data: base64Data
+                                    }
+                                },
+                                {
+                                    type: 'text',
+                                    text: `This is a Lanvin outlet store receipt. Extract ALL the following information:
+
+From the receipt, look for:
+- DESIGNATION column = item name/description (ignore product codes)
+- PRICE column = original price before discount
+- DISC% column = discount percentage
+- Net column = price after discount (before tax)
+- SHIPPING line = $30.00 if present, or null
+- Total at bottom = final amount paid (includes tax)
+- Size information
+- Color information
+- Date at top
+
+Return ONLY this JSON (no markdown, no backticks, no extra text):
+
+{"items":[{"name":"item description","originalPrice":"$X.XX","discount":"X%","netPrice":"$X.XX","size":"size or null","color":"color or null"}],"shipping":"$30.00 or null","total":"$X.XX","date":"YYYY-MM-DD"}
+
+Important:
+- For item name, use the readable text (like "ECLAT D ARPEGE MEN 100 ML"), NOT the product code
+- originalPrice = value from PRICE column
+- discount = value from DISC% column (include the %)
+- netPrice = value from Net column
+- shipping = $30.00 if SHIPPING line shows $30.00 or $32.93 (with tax), otherwise null
+- total = the final total with tax
+- If multiple items on receipt, include all in the items array`
+                                }
+                            ]
+                        }]
+                    })
+                });
+                
+                console.log('Step 5: Request sent, waiting for response...');
+                console.log('API Response Status:', response.status);
+                console.log('API Response OK:', response.ok);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`API error ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Full API response:', JSON.stringify(data, null, 2));
+                
+                const textContent = data.content.find(c => c.type === 'text')?.text || '';
+                
+                console.log('=== RAW AI RESPONSE ===');
+                console.log(textContent);
+                console.log('=== END RAW RESPONSE ===');
+                
+                if (!textContent) {
+                    throw new Error('Empty response from AI');
+                }
+                
+                // Try to extract JSON from response (handle markdown formatting)
+                let cleanJson = textContent.trim();
+                
+                // Remove markdown code blocks if present
+                cleanJson = cleanJson.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+                
+                // Find JSON object in the text
+                const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    console.error('No JSON found. Full text was:', textContent);
+                    throw new Error('No JSON found in response');
+                }
+                
+                cleanJson = jsonMatch[0];
+                
+                console.log('=== CLEANED JSON ===');
+                console.log(cleanJson);
+                console.log('=== END CLEANED ===');
+                
+                let parsed;
+                try {
+                    parsed = JSON.parse(cleanJson);
+                    console.log('=== PARSED DATA ===');
+                    console.log(JSON.stringify(parsed, null, 2));
+                    console.log('=== END PARSED ===');
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError.message);
+                    console.error('Failed to parse:', cleanJson);
+                    throw new Error('Invalid JSON format: ' + parseError.message);
+                }
+                
+                // Auto-fill the form with first item (or combine if multiple)
+                if (parsed.items && parsed.items.length > 0) {
+                    const firstItem = parsed.items[0];
+                    document.getElementById('purchase-item').value = firstItem.name || '';
+                    document.getElementById('purchase-price').value = firstItem.originalPrice || '';
+                    document.getElementById('purchase-discount').value = firstItem.discount || '';
+                    document.getElementById('purchase-net').value = firstItem.netPrice || '';
+                    document.getElementById('purchase-size').value = (firstItem.size && firstItem.size !== 'null') ? firstItem.size : '';
+                    document.getElementById('purchase-color').value = (firstItem.color && firstItem.color !== 'null') ? firstItem.color : '';
+                    
+                    // Set shipping if present
+                    if (parsed.shipping && parsed.shipping !== 'null') {
+                        document.getElementById('purchase-shipping').value = '$30.00';
+                    }
+                    
+                    // Set total
+                    document.getElementById('purchase-total').value = parsed.total || '';
+                    
+                    // If multiple items, show a note
+                    if (parsed.items.length > 1) {
+                        const itemList = parsed.items.map(item => `• ${item.name} - ${item.netPrice}`).join('\n');
+                        alert(`✅ Receipt analyzed!\n\nFound ${parsed.items.length} items:\n${itemList}\n\nShowing first item in form. Add others separately if needed.`);
+                    } else {
+                        alert('✅ Receipt analyzed! Review the data and tap Save Purchase to confirm.');
+                    }
+                } else {
+                    throw new Error('No items found in receipt');
+                }
+                
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+            } catch (error) {
+                console.error('Receipt analysis error:', error);
+                btn.textContent = originalText;
+                btn.disabled = false;
+                alert(`⚠️ Could not analyze receipt.\n\nError: ${error.message}\n\nPlease fill in manually.`);
+            }
+        }
+        
+        function savePurchaseData() {
             const item = document.getElementById('purchase-item').value;
             if (!item) return alert('Item name is required');
             
@@ -901,6 +1168,10 @@
                 date: new Date().toISOString(),
                 item: item,
                 price: document.getElementById('purchase-price').value,
+                discount: document.getElementById('purchase-discount').value,
+                netPrice: document.getElementById('purchase-net').value,
+                shipping: document.getElementById('purchase-shipping').value,
+                total: document.getElementById('purchase-total').value,
                 size: document.getElementById('purchase-size').value,
                 color: document.getElementById('purchase-color').value,
                 hasPhoto: !!photoData
@@ -999,11 +1270,147 @@
             };
             reader.readAsDataURL(photoInput.files[0]);
         }
+        
+        let editingWishlistId = null;
+        
+        function editWishlistItem(itemId) {
+            const item = currentClient.wishlist.find(w => w.id === itemId);
+            if (!item) return;
+            
+            editingWishlistId = itemId;
+            
+            // Pre-fill form with existing data
+            document.getElementById('wishlist-description').value = item.description;
+            document.getElementById('wishlist-price').value = item.priceRange || '';
+            document.getElementById('wishlist-notes').value = item.notes || '';
+            document.getElementById('wishlist-status').value = item.status;
+            
+            // Show preview of existing photo
+            if (item.photo) {
+                document.getElementById('wishlist-preview').innerHTML = `<img src="${item.photo}" class="preview-img">`;
+            }
+            
+            // Change button text
+            const saveBtn = document.querySelector('#add-wishlist-form button[onclick="saveWishlistItem()"]');
+            if (saveBtn) {
+                saveBtn.textContent = 'Update Item';
+                saveBtn.setAttribute('onclick', 'updateWishlistItem()');
+            }
+            
+            hideAll();
+            document.getElementById('add-wishlist-form').classList.remove('hidden');
+        }
+        
+        function updateWishlistItem() {
+            const description = document.getElementById('wishlist-description').value;
+            if (!description) return alert('Item description is required');
+            
+            const item = currentClient.wishlist.find(w => w.id === editingWishlistId);
+            if (!item) return;
+            
+            const photoInput = document.getElementById('wishlist-photo');
+            
+            // Update fields
+            item.description = description;
+            item.priceRange = document.getElementById('wishlist-price').value;
+            item.notes = document.getElementById('wishlist-notes').value;
+            item.status = document.getElementById('wishlist-status').value;
+            
+            // If new photo uploaded, update it
+            if (photoInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    item.photo = e.target.result;
+                    finishWishlistUpdate();
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            } else {
+                finishWishlistUpdate();
+            }
+        }
+        
+        function finishWishlistUpdate() {
+            const idx = clients.findIndex(c => c.id === currentClient.id);
+            clients[idx] = currentClient;
+            saveData();
+            
+            // Reset button
+            const saveBtn = document.querySelector('#add-wishlist-form button');
+            if (saveBtn) {
+                saveBtn.textContent = 'Save to Wishlist';
+                saveBtn.setAttribute('onclick', 'saveWishlistItem()');
+            }
+            
+            editingWishlistId = null;
+            clearWishlistForm();
+            showClientDetail(currentClient.id);
+        }
+        
+        function deleteWishlistItem(itemId) {
+            if (!confirm('Delete this wishlist item?')) return;
+            
+            currentClient.wishlist = currentClient.wishlist.filter(w => w.id !== itemId);
+            
+            const idx = clients.findIndex(c => c.id === currentClient.id);
+            clients[idx] = currentClient;
+            saveData();
+            
+            renderClientDetail();
+        }
+        
+        // Edit client
+        function editClient() {
+            // Pre-fill form with current client data
+            document.getElementById('edit-name').value = currentClient.name;
+            document.getElementById('edit-email').value = currentClient.email || '';
+            document.getElementById('edit-phone').value = currentClient.phone || '';
+            
+            hideAll();
+            document.getElementById('edit-client-form').classList.remove('hidden');
+        }
+        
+        function saveEditClient() {
+            const name = document.getElementById('edit-name').value;
+            if (!name) return alert('Name is required');
+            
+            // Update client
+            currentClient.name = name;
+            currentClient.email = document.getElementById('edit-email').value;
+            currentClient.phone = document.getElementById('edit-phone').value;
+            
+            const idx = clients.findIndex(c => c.id === currentClient.id);
+            clients[idx] = currentClient;
+            saveData();
+            
+            showClientDetail(currentClient.id);
+        }
+        
+        function cancelEditClient() {
+            showClientDetail(currentClient.id);
+        }
+        
+        function deleteClient() {
+            if (!confirm(`⚠️ Delete ${currentClient.name}?\n\nThis will permanently delete:\n• All purchases\n• All messages\n• All wishlist items\n\nThis cannot be undone!`)) {
+                return;
+            }
+            
+            if (!confirm('Are you ABSOLUTELY sure?')) {
+                return;
+            }
+            
+            clients = clients.filter(c => c.id !== currentClient.id);
+            saveData();
+            showDashboard();
+        }
 
         // Clear forms
         function clearPurchaseForm() {
             document.getElementById('purchase-item').value = '';
             document.getElementById('purchase-price').value = '';
+            document.getElementById('purchase-discount').value = '';
+            document.getElementById('purchase-net').value = '';
+            document.getElementById('purchase-shipping').value = '';
+            document.getElementById('purchase-total').value = '';
             document.getElementById('purchase-size').value = '';
             document.getElementById('purchase-color').value = '';
             document.getElementById('receipt-photo').value = '';
@@ -1138,13 +1545,17 @@
                     <div class="item-card">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span style="font-size: 0.85rem; color: #666;">${new Date(p.date).toLocaleDateString()}</span>
-                            <span style="font-weight: 600;">${p.price || 'N/A'}</span>
+                            <span style="font-weight: 600; color: #059669;">${p.total || p.netPrice || p.price || 'N/A'}</span>
                         </div>
-                        <div style="font-weight: 500; margin-bottom: 0.25rem;">${p.item}</div>
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">${p.item}</div>
+                        ${p.price ? `<div style="font-size: 0.9rem; color: #666;">Original: ${p.price}${p.discount ? ` (${p.discount} off)` : ''}</div>` : ''}
+                        ${p.netPrice ? `<div style="font-size: 0.9rem; color: #666;">Net: ${p.netPrice}</div>` : ''}
+                        ${p.shipping ? `<div style="font-size: 0.9rem; color: #666;">Shipping: ${p.shipping}</div>` : ''}
                         <div style="font-size: 0.9rem; color: #666;">
                             ${p.size ? 'Size: ' + p.size : ''}
-                            ${p.color ? ' • Color: ' + p.color : ''}
-                            ${p.hasPhoto ? ' • 📸 Photo attached' : ''}
+                            ${p.size && p.color ? ' • ' : ''}
+                            ${p.color ? 'Color: ' + p.color : ''}
+                            ${p.hasPhoto ? ' • 📸 Receipt' : ''}
                         </div>
                     </div>
                 `).join('');
@@ -1177,11 +1588,17 @@
                     const statusColors = {
                         looking: '#fef3c7',
                         found: '#dcfce7',
+                        pending: '#dbeafe',
+                        'on-hold': '#f3e8ff',
+                        paid: '#d1fae5',
                         'not-interested': '#fee2e2'
                     };
                     const statusLabels = {
                         looking: 'Still Looking',
                         found: 'Found It!',
+                        pending: 'Pending',
+                        'on-hold': 'On Hold',
+                        paid: 'Paid',
                         'not-interested': 'Not Interested'
                     };
                     return `
@@ -1190,10 +1607,25 @@
                                 <span style="font-size: 0.85rem; color: #666;">${new Date(w.date).toLocaleDateString()}</span>
                                 <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: ${statusColors[w.status]}; border-radius: 4px;">${statusLabels[w.status]}</span>
                             </div>
-                            ${w.photo ? `<img src="${w.photo}" style="max-width: 100%; border-radius: 8px; margin-bottom: 0.5rem;">` : ''}
+                            ${w.photo ? `
+                                <img 
+                                    src="${w.photo}" 
+                                    onclick="editWishlistItem('${w.id}')" 
+                                    style="max-width: 100%; border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: opacity 0.2s;" 
+                                    onmousedown="this.style.opacity='0.7'" 
+                                    onmouseup="this.style.opacity='1'" 
+                                    ontouchstart="this.style.opacity='0.7'" 
+                                    ontouchend="this.style.opacity='1'"
+                                >
+                            ` : ''}
                             <div style="font-weight: 500; margin-bottom: 0.25rem;">${w.description}</div>
                             ${w.priceRange ? `<div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Price: ${w.priceRange}</div>` : ''}
-                            ${w.notes ? `<div style="font-size: 0.9rem; color: #666; font-style: italic;">${w.notes}</div>` : ''}
+                            ${w.notes ? `<div style="font-size: 0.9rem; color: #666; font-style: italic; margin-bottom: 0.5rem;">${w.notes}</div>` : ''}
+                            <div style="text-align: right;">
+                                <button onclick="event.stopPropagation(); deleteWishlistItem('${w.id}')" style="background: transparent; border: none; color: #dc2626; font-size: 0.75rem; cursor: pointer; padding: 0.25rem 0.5rem; text-decoration: underline;">
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('');
