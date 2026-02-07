@@ -900,6 +900,7 @@
         window.cancelEditClient = cancelEditClient;
         window.deleteClient = deleteClient;
         window.clearImagePreview = clearImagePreview;
+        window.switchTab = switchTab;
 
         // Show views
         function showDashboard() {
@@ -1363,17 +1364,15 @@ Important:
         function deleteWishlistItem(itemId) {
             if (!confirm('Delete this wishlist item?')) return;
             
-            if (!currentClient.wishlist) return;
-            
+            // Filter out the item
             currentClient.wishlist = currentClient.wishlist.filter(w => w.id !== itemId);
             
+            // Save to clients array
             const idx = clients.findIndex(c => c.id === currentClient.id);
-            if (idx !== -1) {
-                clients[idx] = currentClient;
-                saveData();
-            }
+            clients[idx] = currentClient;
+            saveData();
             
-            // Re-render the client detail view
+            // Go back to client detail
             showClientDetail(currentClient.id);
         }
         
@@ -1669,10 +1668,19 @@ Important:
         // Set up event delegation for wishlist delete buttons (one-time setup)
         document.addEventListener('DOMContentLoaded', function() {
             document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('delete-wishlist-btn')) {
+                // Check if clicked element or its parent is the delete button
+                let target = e.target;
+                const isDeleteBtn = target && target.classList && target.classList.contains('delete-wishlist-btn');
+                const parentIsDeleteBtn = target && target.parentElement && target.parentElement.classList && target.parentElement.classList.contains('delete-wishlist-btn');
+                
+                if (isDeleteBtn || parentIsDeleteBtn) {
                     e.preventDefault();
                     e.stopPropagation();
-                    const itemId = e.target.getAttribute('data-item-id');
+                    
+                    // Get the button element (might be target or parent)
+                    const button = isDeleteBtn ? target : target.parentElement;
+                    const itemId = button ? button.getAttribute('data-item-id') : null;
+                    
                     if (itemId) {
                         deleteWishlistItem(itemId);
                     }
