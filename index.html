@@ -1663,21 +1663,22 @@ Important:
                         </div>
                     `;
                 }).join('');
-                
-                // Add event listeners for delete buttons
-                setTimeout(() => {
-                    const deleteButtons = document.querySelectorAll('.delete-wishlist-btn');
-                    deleteButtons.forEach(btn => {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const itemId = this.getAttribute('data-item-id');
-                            deleteWishlistItem(itemId);
-                        });
-                    });
-                }, 100);
             }
         }
+        
+        // Set up event delegation for wishlist delete buttons (one-time setup)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('delete-wishlist-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const itemId = e.target.getAttribute('data-item-id');
+                    if (itemId) {
+                        deleteWishlistItem(itemId);
+                    }
+                }
+            });
+        });
 
         // Initialize
         loadData();
