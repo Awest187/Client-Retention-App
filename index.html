@@ -368,6 +368,10 @@
             <div>
                 <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">💾 Data Management</h3>
                 
+                <div id="last-updated-indicator" style="background: #f0f9ff; border: 1px solid #3b82f6; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.85rem;">
+                    <strong>📅 Last Updated:</strong> <span id="last-updated-time">Never</span>
+                </div>
+                
                 <button class="btn btn-outline" onclick="exportData()" style="width: 100%; margin-bottom: 0.5rem;">
                     📤 Export All Data
                 </button>
@@ -612,12 +616,21 @@
     <script>
         let clients = [];
         let currentClient = null;
+        let lastUpdated = null;
 
         // Load data
         function loadData() {
             const saved = localStorage.getItem('clientele_data');
             if (saved) {
-                clients = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                // Handle both old format (just array) and new format (object with clients + lastUpdated)
+                if (Array.isArray(parsed)) {
+                    clients = parsed;
+                    lastUpdated = null;
+                } else {
+                    clients = parsed.clients || [];
+                    lastUpdated = parsed.lastUpdated || null;
+                }
             }
             renderDashboard();
             loadSettings();
@@ -625,7 +638,11 @@
 
         // Save data
         function saveData() {
-            localStorage.setItem('clientele_data', JSON.stringify(clients));
+            const dataToSave = {
+                clients: clients,
+                lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem('clientele_data', JSON.stringify(dataToSave));
         }
         
         // Settings Management
@@ -654,6 +671,36 @@
             hideAll();
             document.getElementById('settings-view').classList.remove('hidden');
             updateSettingsUI();
+            updateLastUpdatedDisplay();
+        }
+        
+        function updateLastUpdatedDisplay() {
+            const displayElement = document.getElementById('last-updated-time');
+            if (lastUpdated) {
+                const date = new Date(lastUpdated);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                let timeAgo;
+                if (diffMins < 1) {
+                    timeAgo = 'Just now';
+                } else if (diffMins < 60) {
+                    timeAgo = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+                } else if (diffHours < 24) {
+                    timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                } else if (diffDays < 7) {
+                    timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                } else {
+                    timeAgo = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                }
+                
+                displayElement.textContent = timeAgo;
+            } else {
+                displayElement.textContent = 'Never';
+            }
         }
         
         function updateSettingsUI() {
@@ -808,7 +855,6 @@
                         }
                     } catch (error) {
                         alert('❌ Error importing file. Make sure it\'s a valid Clientèle backup.');
-                        console.error(error);
                     }
                 };
                 reader.readAsText(file);
@@ -853,6 +899,7 @@
         window.saveEditClient = saveEditClient;
         window.cancelEditClient = cancelEditClient;
         window.deleteClient = deleteClient;
+        window.clearImagePreview = clearImagePreview;
 
         // Show views
         function showDashboard() {
@@ -952,17 +999,11 @@
 
         // Save purchase
         async function savePurchase() {
-            console.log('savePurchase called');
             const item = document.getElementById('purchase-item').value;
             const photoInput = document.getElementById('receipt-photo');
             
-            console.log('Has photo:', photoInput.files.length > 0);
-            console.log('API Key exists:', !!appSettings.apiKey);
-            console.log('Receipt AI enabled:', appSettings.features.receiptAI);
-            
             // If AI is enabled and photo is uploaded, analyze it first
             if (appSettings.apiKey && appSettings.features.receiptAI && photoInput.files.length > 0) {
-                console.log('Starting AI analysis...');
                 await analyzeReceipt(photoInput.files[0]);
                 return; // analyzeReceipt will call savePurchaseData when done
             }
@@ -973,7 +1014,6 @@
                 return;
             }
             
-            console.log('Saving without AI');
             savePurchaseData();
         }
         
@@ -985,29 +1025,21 @@
             btn.disabled = true;
             
             try {
-                console.log('Step 1: Starting image conversion...');
-                console.log('File type:', file.type);
-                console.log('File size:', file.size);
                 
                 // Convert image to base64
                 const base64Data = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
-                        console.log('Step 2: Image converted to base64');
                         resolve(reader.result.split(',')[1]);
                     };
                     reader.onerror = () => {
-                        console.error('Step 2 FAILED: Image read error');
                         reject(new Error('Failed to read image'));
                     };
                     reader.readAsDataURL(file);
                 });
                 
-                console.log('Step 3: Preparing API request...');
-                console.log('API Key length:', appSettings.apiKey.length);
                 
                 // Call Claude API
-                console.log('Step 4: Sending request to API...');
                 const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
                     headers: {
@@ -1062,24 +1094,16 @@ Important:
                     })
                 });
                 
-                console.log('Step 5: Request sent, waiting for response...');
-                console.log('API Response Status:', response.status);
-                console.log('API Response OK:', response.ok);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('API Error Response:', errorText);
                     throw new Error(`API error ${response.status}: ${errorText}`);
                 }
                 
                 const data = await response.json();
-                console.log('Full API response:', JSON.stringify(data, null, 2));
                 
                 const textContent = data.content.find(c => c.type === 'text')?.text || '';
                 
-                console.log('=== RAW AI RESPONSE ===');
-                console.log(textContent);
-                console.log('=== END RAW RESPONSE ===');
                 
                 if (!textContent) {
                     throw new Error('Empty response from AI');
@@ -1094,25 +1118,16 @@ Important:
                 // Find JSON object in the text
                 const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
-                    console.error('No JSON found. Full text was:', textContent);
                     throw new Error('No JSON found in response');
                 }
                 
                 cleanJson = jsonMatch[0];
                 
-                console.log('=== CLEANED JSON ===');
-                console.log(cleanJson);
-                console.log('=== END CLEANED ===');
                 
                 let parsed;
                 try {
                     parsed = JSON.parse(cleanJson);
-                    console.log('=== PARSED DATA ===');
-                    console.log(JSON.stringify(parsed, null, 2));
-                    console.log('=== END PARSED ===');
                 } catch (parseError) {
-                    console.error('JSON Parse Error:', parseError.message);
-                    console.error('Failed to parse:', cleanJson);
                     throw new Error('Invalid JSON format: ' + parseError.message);
                 }
                 
@@ -1149,7 +1164,6 @@ Important:
                 btn.disabled = false;
                 
             } catch (error) {
-                console.error('Receipt analysis error:', error);
                 btn.textContent = originalText;
                 btn.disabled = false;
                 alert(`⚠️ Could not analyze receipt.\n\nError: ${error.message}\n\nPlease fill in manually.`);
@@ -1349,13 +1363,18 @@ Important:
         function deleteWishlistItem(itemId) {
             if (!confirm('Delete this wishlist item?')) return;
             
+            if (!currentClient.wishlist) return;
+            
             currentClient.wishlist = currentClient.wishlist.filter(w => w.id !== itemId);
             
             const idx = clients.findIndex(c => c.id === currentClient.id);
-            clients[idx] = currentClient;
-            saveData();
+            if (idx !== -1) {
+                clients[idx] = currentClient;
+                saveData();
+            }
             
-            renderClientDetail();
+            // Re-render the client detail view
+            showClientDetail(currentClient.id);
         }
         
         // Edit client
@@ -1400,6 +1419,8 @@ Important:
             
             clients = clients.filter(c => c.id !== currentClient.id);
             saveData();
+            
+            // Go back to dashboard immediately so user sees it's deleted
             showDashboard();
         }
 
@@ -1439,10 +1460,23 @@ Important:
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" class="preview-img">`;
+                    preview.innerHTML = `
+                        <div style="position: relative; display: inline-block;">
+                            <img src="${e.target.result}" class="preview-img">
+                            <button 
+                                onclick="clearImagePreview('${input.id}', '${previewId}')" 
+                                style="position: absolute; top: 0.5rem; right: 0.5rem; background: #dc2626; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 1.2rem; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"
+                            >×</button>
+                        </div>
+                    `;
                 };
                 reader.readAsDataURL(input.files[0]);
             }
+        }
+        
+        function clearImagePreview(inputId, previewId) {
+            document.getElementById(inputId).value = '';
+            document.getElementById(previewId).innerHTML = '';
         }
 
         // Switch tabs
@@ -1622,13 +1656,26 @@ Important:
                             ${w.priceRange ? `<div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">Price: ${w.priceRange}</div>` : ''}
                             ${w.notes ? `<div style="font-size: 0.9rem; color: #666; font-style: italic; margin-bottom: 0.5rem;">${w.notes}</div>` : ''}
                             <div style="text-align: right;">
-                                <button onclick="event.stopPropagation(); deleteWishlistItem('${w.id}')" style="background: transparent; border: none; color: #dc2626; font-size: 0.75rem; cursor: pointer; padding: 0.25rem 0.5rem; text-decoration: underline;">
+                                <button class="delete-wishlist-btn" data-item-id="${w.id}" style="background: transparent; border: none; color: #dc2626; font-size: 0.75rem; cursor: pointer; padding: 0.25rem 0.5rem; text-decoration: underline;">
                                     Delete
                                 </button>
                             </div>
                         </div>
                     `;
                 }).join('');
+                
+                // Add event listeners for delete buttons
+                setTimeout(() => {
+                    const deleteButtons = document.querySelectorAll('.delete-wishlist-btn');
+                    deleteButtons.forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const itemId = this.getAttribute('data-item-id');
+                            deleteWishlistItem(itemId);
+                        });
+                    });
+                }, 100);
             }
         }
 
@@ -2062,7 +2109,6 @@ Format as simple text with clear sections. Be concise but insightful. Focus on w
                 document.getElementById('brief-content').innerHTML = html;
 
             } catch (error) {
-                console.error('AI brief error:', error);
                 // Fall back to manual brief
                 displayManualBrief(analysis);
             }
