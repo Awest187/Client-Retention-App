@@ -1364,16 +1364,8 @@ Important:
         function deleteWishlistItem(itemId) {
             if (!confirm('Delete this wishlist item?')) return;
             
-            // Debug: Log what we're trying to delete
-            alert(`Deleting item with ID: ${itemId}\nBefore: ${currentClient.wishlist.length} items`);
-            
             // Filter out the item - use strict equality
-            const beforeLength = currentClient.wishlist.length;
             currentClient.wishlist = currentClient.wishlist.filter(w => w.id !== itemId);
-            const afterLength = currentClient.wishlist.length;
-            
-            // Debug: Confirm deletion
-            alert(`After: ${afterLength} items\nDeleted: ${beforeLength - afterLength} item(s)`);
             
             // Save to clients array
             const idx = clients.findIndex(c => c.id === currentClient.id);
